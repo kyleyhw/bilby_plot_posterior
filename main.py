@@ -1,16 +1,11 @@
-# This is a sample Python script.
+from data_loader_json import DataLoaderJSON
+from plot_posterior import PlotPosterior
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+filename = 'bns_example_result.json'
+parameters = ['lambda_1', 'lambda_2']
 
+data = DataLoaderJSON(filename=filename, parameters=parameters)
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+plotter = PlotPosterior(data.posteriors_dict['lambda_1'], data.posteriors_dict['lambda_2'])
 
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+plotter.plot(save=True, show=True, xlabel=r'\lambda_1', ylabel=r'\lambda_2')
