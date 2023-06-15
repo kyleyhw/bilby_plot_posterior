@@ -1,11 +1,14 @@
 from data_loader_json import DataLoaderJSON
 from plot_posterior import PlotPosterior
 
-filename = 'bns_example_result.json'
+filename = 'bns_example_result'
+# filename = 'bns_fixed_m_example_result'
+
+# parameters = ['symmetric_mass_ratio', 'lambda_tilde']
 parameters = ['lambda_1', 'lambda_2']
 
-data = DataLoaderJSON(filename=filename, parameters=parameters)
+data = DataLoaderJSON(filename=filename + '.json', parameters=parameters)
 
-plotter = PlotPosterior(data.posteriors_dict['lambda_1'], data.posteriors_dict['lambda_2'])
+plotter = PlotPosterior(data.posteriors_dict[parameters[0]], data.posteriors_dict[parameters[1]], data.injection_dict[parameters[0]], data.injection_dict[parameters[1]])
 
-plotter.plot(save=True, show=True, xlabel=r'\lambda_1', ylabel=r'\lambda_2')
+plotter.plot(save=True, show=False, xlabel=parameters[0], ylabel=parameters[1], title=filename)
