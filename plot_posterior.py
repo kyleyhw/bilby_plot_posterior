@@ -41,6 +41,6 @@ class PlotPosterior:
         plt.legend()
 
         if save:
-            plt.savefig(title + '_plot.png')
+            plt.savefig('plots/' + title + '_plot.png')
         if show:
             plt.show()

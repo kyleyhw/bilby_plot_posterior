@@ -1,5 +1,5 @@
 import numpy as np
-from data_loader_json import DataLoaderJSON
+from data_loader import DataLoaderJSON
 def delta_Lambda_tilde(eta, lambda_1, lambda_2):
     first_term = np.sqrt(1 - 4*eta) * (1 - (13272 / 1319)*eta + (8944/1319)*eta**2)*(lambda_1 + lambda_2)
     second_term = (1 - (15910/1319)*eta + (32850/1319)*eta**2 + (3380/1319)*eta**3)*(lambda_1 - lambda_2)
