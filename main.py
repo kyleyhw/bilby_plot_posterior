@@ -8,7 +8,8 @@ parameters = ['lambda_1', 'lambda_2']
 # filename = 'bns_fixed_m_example_result'
 # data = DataLoaderJSON(filename='data/' + filename + '.json', parameters=parameters)
 
-filename = 'bns_example_data0_1126259642-413_analysis_H1L1V1_result'
+# filename = 'bns_example_data0_1126259642-413_analysis_H1L1V1_result'
+filename = 'bns_zero_spin_example_data0_1126259642-413_analysis_H1L1V1_result'
 data = DataLoaderH5(filename='data/' + filename + '.hdf5', parameters=parameters)
 
 
