@@ -8,24 +8,21 @@ class PlotPosterior:
         self.injected_1 = injected_1
         self.injected_2 = injected_2
 
-    def scatter_hist(self, x, y, ax, injected_x, injected_y, ax_histx, ax_histy):
+    def scatter_hist(self, x, y, ax, injected_x, injected_y, ax_histx, ax_histy, **kwargs):
         ax_histx.tick_params(axis="x", labelbottom=False)
         ax_histy.tick_params(axis="y", labelleft=False)
 
-        sns.kdeplot(x=x, y=y, ax=ax, levels=[0.1, 0.5])
+        sns.kdeplot(x=x, y=y, ax=ax, levels=[0.1, 0.5], **kwargs)
         plt.scatter(x, y, alpha=0.1, color='blue')
 
-        sns.kdeplot(x=x, ax=ax_histx)
-        sns.kdeplot(y=y, ax=ax_histy)
+        sns.kdeplot(x=x, ax=ax_histx, **kwargs)
+        sns.kdeplot(y=y, ax=ax_histy, **kwargs)
 
-        ax.axvline(injected_x, color='orange')
-        ax.axhline(injected_y, color='orange')
-        ax.scatter([injected_x], [injected_y], color='orange', marker='o', label='injected value')
+        ax.axvline(injected_x, color='black')
+        ax.axhline(injected_y, color='black')
+        ax.scatter([injected_x], [injected_y], color='black', marker='o', label='injected value')
 
-
-
-
-    def plot(self, save=False, show=False, xlabel='', ylabel='', title=''):
+    def plot(self, save=False, show=False, xlabel='', ylabel='', title='', **kwargs):
         fig = plt.figure(figsize=(8, 8))
         ax = fig.add_gridspec(top=0.75, right=0.75).subplots()
         ax.set(box_aspect=1)
@@ -33,7 +30,7 @@ class PlotPosterior:
         ax_histx = ax.inset_axes([0, 1.05, 1, 0.25], sharex=ax)
         ax_histy = ax.inset_axes([1.05, 0, 0.25, 1], sharey=ax)
 
-        self.scatter_hist(x=self.data1, y=self.data2, ax=ax, injected_x=self.injected_1, injected_y=self.injected_2, ax_histx=ax_histx, ax_histy=ax_histy)
+        self.scatter_hist(x=self.data1, y=self.data2, ax=ax, injected_x=self.injected_1, injected_y=self.injected_2, ax_histx=ax_histx, ax_histy=ax_histy, **kwargs)
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
