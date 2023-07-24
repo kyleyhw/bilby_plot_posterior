@@ -1,18 +1,25 @@
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 class PlotPosterior:
-    def __init__(self, data1, data2, injected_1, injected_2):
+    def __init__(self, data1, data2, injected_1, injected_2, limit_at_axes=False, limit_at_diagonal=False):
         self.data1 = data1
         self.data2 = data2
         self.injected_1 = injected_1
         self.injected_2 = injected_2
 
+        self.data1_reflected = np.flip(self.data1)
+        self.data2_reflected = np.flip(self.data2)
+
+        if limit_at_axes:
+
+
     def scatter_hist(self, x, y, ax, injected_x, injected_y, ax_histx, ax_histy, **kwargs):
         ax_histx.tick_params(axis="x", labelbottom=False)
         ax_histy.tick_params(axis="y", labelleft=False)
 
-        sns.kdeplot(x=x, y=y, ax=ax, levels=[0.1, 0.5], **kwargs)
+        sns.kdeplot(x=x, y=y, ax=ax, levels=[0.1, 0.5], clip=(0, 3000), **kwargs)
         plt.scatter(x, y, alpha=0.1, color='blue')
 
         sns.kdeplot(x=x, ax=ax_histx, **kwargs)
