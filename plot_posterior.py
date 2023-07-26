@@ -9,17 +9,12 @@ class PlotPosterior:
         self.injected_1 = injected_1
         self.injected_2 = injected_2
 
+        self.limit_at_axes = limit_at_axes
+        self.limit_at_diagonal = limit_at_diagonal
+
         self.clip = None
 
-        self.bin_width = 50
-
-        if limit_at_axes:
-            self.x_clip = (0, 99999)
-            self.y_clip = (0, 99999)
-            self.clip = (self.x_clip, self.y_clip)
-
-        if limit_at_diagonal:
-            pass
+        self.bin_width = 200
 
     def extend_data_for_hard_limit(self, data1, data2, bin_width):
         coords = np.column_stack((data1, data2))
@@ -38,30 +33,42 @@ class PlotPosterior:
         flip_y_matrix[1, 1] = -1
 
         coords_extended = np.zeros(shape=(extend_length + len(coords) + extend_length, 2))
-        # coords_extended[extend_length:-extend_length] = coords
+        coords_extended[extend_length:-extend_length] = coords
 
         for i in range(extend_length):
-            coords_extended[i] = coords[x_sort_indices][i] @ flip_y_matrix
-            coords_extended[-i] = coords[y_sort_indices][-i] @ flip_x_matrix
+            coords_extended[i] = coords[x_sort_indices][i] @ flip_x_matrix
+            coords_extended[-i] = coords[y_sort_indices][i] @ flip_y_matrix
 
             coords_extended[2*i] = coords[x_sort_indices][i]
-            coords_extended[2*-i] = coords[y_sort_indices][-i]
+            coords_extended[2*-i] = coords[y_sort_indices][i]
 
         extended_data1, extended_data2 = zip(*coords_extended)
 
         return extended_data1, extended_data2
 
     def scatter_hist(self, x, y, ax, injected_x, injected_y, ax_histx, ax_histy, scatter_color='blue', **kwargs):
+        clip = None
+
+        if self.limit_at_axes:
+            x_clip = (0, 99999)
+            y_clip = (0, 99999)
+            clip = (x_clip, y_clip)
+
+            x, y = self.extend_data_for_hard_limit(x, y, bin_width=self.bin_width)
+
+        if self.limit_at_diagonal:
+            pass
+
         ax_histx.tick_params(axis="x", labelbottom=False)
         ax_histy.tick_params(axis="y", labelleft=False)
 
-        x_extended, y_extended = self.extend_data_for_hard_limit(x, y, bin_width=self.bin_width)
 
-        sns.kdeplot(x=x_extended, y=y_extended, ax=ax, levels=[0.1, 0.5], clip=self.clip, **kwargs)
-        ax.scatter(x_extended, y_extended, alpha=0.07, color=scatter_color)
 
-        sns.kdeplot(x=x_extended, ax=ax_histx, **kwargs)
-        sns.kdeplot(y=y_extended, ax=ax_histy, **kwargs)
+        sns.kdeplot(x=x, y=y, ax=ax, levels=[0.1, 0.5], clip=clip, **kwargs)
+        ax.scatter(x, y, alpha=0.07, color=scatter_color)
+
+        sns.kdeplot(x=x, ax=ax_histx, **kwargs)
+        sns.kdeplot(y=y, ax=ax_histy, **kwargs)
 
         ax.axvline(injected_x, color='black')
         ax.axhline(injected_y, color='black')
