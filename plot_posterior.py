@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.ndimage import rotate
 
 class PlotPosterior:
     def __init__(self, data1, data2, injected_1, injected_2, limit_at_axes=True, limit_at_diagonal=False):
@@ -32,7 +33,7 @@ class PlotPosterior:
         flip_y_matrix[1, 1] = -1
 
         coords_extended = np.zeros(shape=(extend_length + len(coords) + extend_length, 2))
-        coords_extended[extend_length:-extend_length] = coords
+        # coords_extended[extend_length:-extend_length] = coords
 
         for i in range(extend_length):
             coords_extended[i] = coords[x_sort_indices][i] @ flip_x_matrix
@@ -45,10 +46,26 @@ class PlotPosterior:
 
         return extended_data1, extended_data2
 
-    def rotate(self, data1, data2, angle):
+    def rotate_data(self, data1, data2, angle): # angle in degrees
+        angle = angle * np.pi / 180
+
         coords = np.column_stack((data1, data2))
 
         rotation_matrix = np.zeros(shape=(2, 2))
+        rotation_matrix[0, 0] = np.cos(angle)
+        rotation_matrix[0, 1] = -np.sin(angle)
+        rotation_matrix[1, 0] = np.sin(angle)
+        rotation_matrix[1, 1] = np.cos(angle)
+
+        print(rotation_matrix)
+
+        rotated_coords = np.zeros_like(coords)
+        for i, coord in enumerate(coords):
+            rotated_coords[i] = coord @ rotation_matrix
+
+        rotated_data1, rotated_data2 = zip(*rotated_coords)
+
+        return rotated_data1, rotated_data2
 
     def scatter_hist(self, x, y, ax, injected_x, injected_y, ax_histx, ax_histy, scatter_color='blue', **kwargs):
         clip = None
@@ -57,22 +74,22 @@ class PlotPosterior:
         kde_y = y
 
         if self.limit_at_axes:
+            kde_x, kde_y = self.extend_data_for_axis_limit(x, y, bin_width=self.bin_width)
+
             x_clip = (0, 99999)
             y_clip = (0, 99999)
             clip = (x_clip, y_clip)
 
-            kde_x, kde_y = self.extend_data_for_hard_limit(x, y, bin_width=self.bin_width)
-
         if self.limit_at_diagonal:
-            pass
+            kde_x, kde_y = self.rotate_data(kde_x, kde_y, 45) # why is it 45 and not -45?
+            kde_x, kde_y = self.extend_data_for_axis_limit(kde_x, kde_y, bin_width=self.bin_width)
+            # kde_x, kde_y = self.rotate_data(kde_x, kde_y, -45)
 
         ax_histx.tick_params(axis="x", labelbottom=False)
         ax_histy.tick_params(axis="y", labelleft=False)
 
-
-
         sns.kdeplot(x=kde_x, y=kde_y, ax=ax, levels=[0.1, 0.5], clip=clip, **kwargs)
-        ax.scatter(x, y, alpha=0.07, color=scatter_color)
+        ax.scatter(kde_x, kde_y, alpha=0.07, color=scatter_color)
 
         sns.kdeplot(x=kde_x, ax=ax_histx, **kwargs)
         sns.kdeplot(y=kde_y, ax=ax_histy, **kwargs)
