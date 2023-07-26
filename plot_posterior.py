@@ -16,9 +16,8 @@ class PlotPosterior:
 
         self.bin_width = 200
 
-    def extend_data_for_hard_limit(self, data1, data2, bin_width):
+    def extend_data_for_axis_limit(self, data1, data2, bin_width):
         coords = np.column_stack((data1, data2))
-
         extend_length = int(np.ceil(bin_width))
 
         x_sort_indices = np.lexsort((coords[:,1], coords[:,0]))
@@ -46,15 +45,23 @@ class PlotPosterior:
 
         return extended_data1, extended_data2
 
+    def rotate(self, data1, data2, angle):
+        coords = np.column_stack((data1, data2))
+
+        rotation_matrix = np.zeros(shape=(2, 2))
+
     def scatter_hist(self, x, y, ax, injected_x, injected_y, ax_histx, ax_histy, scatter_color='blue', **kwargs):
         clip = None
+
+        kde_x = x
+        kde_y = y
 
         if self.limit_at_axes:
             x_clip = (0, 99999)
             y_clip = (0, 99999)
             clip = (x_clip, y_clip)
 
-            x, y = self.extend_data_for_hard_limit(x, y, bin_width=self.bin_width)
+            kde_x, kde_y = self.extend_data_for_hard_limit(x, y, bin_width=self.bin_width)
 
         if self.limit_at_diagonal:
             pass
@@ -64,11 +71,11 @@ class PlotPosterior:
 
 
 
-        sns.kdeplot(x=x, y=y, ax=ax, levels=[0.1, 0.5], clip=clip, **kwargs)
+        sns.kdeplot(x=kde_x, y=kde_y, ax=ax, levels=[0.1, 0.5], clip=clip, **kwargs)
         ax.scatter(x, y, alpha=0.07, color=scatter_color)
 
-        sns.kdeplot(x=x, ax=ax_histx, **kwargs)
-        sns.kdeplot(y=y, ax=ax_histy, **kwargs)
+        sns.kdeplot(x=kde_x, ax=ax_histx, **kwargs)
+        sns.kdeplot(y=kde_y, ax=ax_histy, **kwargs)
 
         ax.axvline(injected_x, color='black')
         ax.axhline(injected_y, color='black')
