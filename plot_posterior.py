@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.ndimage import rotate
+
 
 class PlotPosterior:
     def __init__(self, data1, data2, injected_1, injected_2, limit_at_axes=True, limit_at_diagonal=False):
@@ -15,14 +15,28 @@ class PlotPosterior:
 
         self.clip = None
 
-        self.bin_width = 200
+        self.bin_width = self.scotts_rule(n=len(data1), d=2)
+
+        print('bin width =', self.bin_width)
+
+    def scotts_rule(self, n, d):
+        result = n ** (-1. / (d + 4))
+        return result
+
 
     def extend_data_for_axis_limit(self, data1, data2, bin_width):
         coords = np.column_stack((data1, data2))
-        extend_length = int(np.ceil(bin_width))
 
-        x_sort_indices = np.lexsort((coords[:,1], coords[:,0]))
-        y_sort_indices = np.lexsort((coords[:,0], coords[:,1]))
+        first_quadrant_filter = np.intersect1d(np.where(coords[:, 0] > 0)[0], np.where(coords[:, 1] > 0)[0])
+        coords = coords[first_quadrant_filter]
+
+        x_extend_filter = np.where(coords[:, 0] < bin_width)[0]
+        y_extend_filter = np.where(coords[:, 1] < bin_width)[0]
+
+        x_extend_length = len(x_extend_filter)
+        y_extend_length = len(y_extend_filter)
+
+        extend_length = x_extend_length + y_extend_length # if zero, then cannot broadcast coords into coords_extended[x_extend_length:-y_extend_length]
 
         flip_x_matrix = np.zeros(shape=(2, 2))
         flip_x_matrix[0, 0] = -1
@@ -32,15 +46,15 @@ class PlotPosterior:
         flip_y_matrix[0, 0] = 1
         flip_y_matrix[1, 1] = -1
 
-        coords_extended = np.zeros(shape=(extend_length + len(coords) + extend_length, 2))
-        # coords_extended[extend_length:-extend_length] = coords
-
-        for i in range(extend_length):
-            coords_extended[i] = coords[x_sort_indices][i] @ flip_x_matrix
-            coords_extended[-i] = coords[y_sort_indices][i] @ flip_y_matrix
-
-            coords_extended[2*i] = coords[x_sort_indices][i]
-            coords_extended[2*-i] = coords[y_sort_indices][i]
+        coords_extended = np.zeros(shape=(x_extend_length + len(coords) + y_extend_length, 2))
+        if extend_length != 0:
+            coords_extended[x_extend_length:-y_extend_length] = coords
+            for i in range(x_extend_length):
+                coords_extended[i] = coords[x_extend_filter][i] @ flip_x_matrix
+            for i in range(y_extend_length):
+                coords_extended[-i - 1] = coords[y_extend_filter][i] @ flip_y_matrix
+        else:
+            coords_extended = coords
 
         extended_data1, extended_data2 = zip(*coords_extended)
 
@@ -56,8 +70,6 @@ class PlotPosterior:
         rotation_matrix[0, 1] = -np.sin(angle)
         rotation_matrix[1, 0] = np.sin(angle)
         rotation_matrix[1, 1] = np.cos(angle)
-
-        print(rotation_matrix)
 
         rotated_coords = np.zeros_like(coords)
         for i, coord in enumerate(coords):
@@ -83,7 +95,7 @@ class PlotPosterior:
         if self.limit_at_diagonal:
             kde_x, kde_y = self.rotate_data(kde_x, kde_y, 45) # why is it 45 and not -45?
             kde_x, kde_y = self.extend_data_for_axis_limit(kde_x, kde_y, bin_width=self.bin_width)
-            # kde_x, kde_y = self.rotate_data(kde_x, kde_y, -45)
+            kde_x, kde_y = self.rotate_data(kde_x, kde_y, -45)
 
         ax_histx.tick_params(axis="x", labelbottom=False)
         ax_histy.tick_params(axis="y", labelleft=False)
@@ -97,6 +109,9 @@ class PlotPosterior:
         ax.axvline(injected_x, color='black')
         ax.axhline(injected_y, color='black')
         ax.scatter([injected_x], [injected_y], color='black', marker='o', label='injected value')
+
+        ax.axvline(0, color='red')
+        ax.axhline(0, color='red')
 
     def plot(self, save=False, show=False, xlabel='', ylabel='', title='', **kwargs):
         fig = plt.figure(figsize=(8, 8))

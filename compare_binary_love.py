@@ -9,14 +9,14 @@ zero_spin_filename = 'bns_zero_spin_L1L2_example_data0_1126259642-413_analysis_H
 zero_spin_data = DataLoaderH5(filename='data/' + zero_spin_filename + '.hdf5', parameters=parameters)
 zero_spin_plotter = PlotPosterior(zero_spin_data.posteriors_dict[parameters[0]], zero_spin_data.posteriors_dict[parameters[1]],
                                   zero_spin_data.injection_dict[parameters[0]], zero_spin_data.injection_dict[parameters[1]],
-                                  limit_at_axes=False, limit_at_diagonal=True)
+                                  limit_at_axes=True, limit_at_diagonal=False)
 
 
 binary_love_filename = 'bns_binary_love_example_data0_1126259642-413_analysis_H1L1V1_result'
 binary_love_data = DataLoaderH5(filename='data/' + binary_love_filename + '.hdf5', parameters=parameters)
 binary_love_plotter = PlotPosterior(binary_love_data.posteriors_dict[parameters[0]], binary_love_data.posteriors_dict[parameters[1]],
                                   binary_love_data.injection_dict[parameters[0]], binary_love_data.injection_dict[parameters[1]],
-                                    limit_at_axes=False, limit_at_diagonal=False)
+                                    limit_at_axes=False, limit_at_diagonal=True)
 
 
 
