@@ -4,7 +4,7 @@ import seaborn as sns
 
 
 class PlotPosterior:
-    def __init__(self, data1, data2, injected_1, injected_2, limit_at_axes=True, limit_at_diagonal=False):
+    def __init__(self, data1, data2, injected_1, injected_2, limit_at_axes=False, limit_at_diagonal=False):
         self.data1 = data1
         self.data2 = data2
         self.injected_1 = injected_1
@@ -15,23 +15,29 @@ class PlotPosterior:
 
         self.clip = None
 
-        self.bin_width = self.scotts_rule(n=len(data1), d=2)
+        self.bin_widths = self.hist_bin_sizes()
 
-        print('bin width =', self.bin_width)
+        print('bin width =', self.bin_widths)
 
     def scotts_rule(self, n, d):
         result = n ** (-1. / (d + 4))
         return result
 
+    def hist_bin_sizes(self):
+        x_bin_size = (np.max(self.data1) - np.min(self.data1)) / np.sqrt(len(self.data1))
+        y_bin_size = (np.max(self.data2) - np.min(self.data2)) / np.sqrt(len(self.data2))
 
-    def extend_data_for_axis_limit(self, data1, data2, bin_width):
+        return x_bin_size, y_bin_size
+
+    def extend_data_for_axis_limit(self, data1, data2, bin_widths):
         coords = np.column_stack((data1, data2))
+        x_bin_width, y_bin_width = bin_widths
 
         first_quadrant_filter = np.intersect1d(np.where(coords[:, 0] > 0)[0], np.where(coords[:, 1] > 0)[0])
         coords = coords[first_quadrant_filter]
 
-        x_extend_filter = np.where(coords[:, 0] < bin_width)[0]
-        y_extend_filter = np.where(coords[:, 1] < bin_width)[0]
+        x_extend_filter = np.where(coords[:, 0] < x_bin_width)[0]
+        y_extend_filter = np.where(coords[:, 1] < y_bin_width)[0]
 
         x_extend_length = len(x_extend_filter)
         y_extend_length = len(y_extend_filter)
@@ -71,6 +77,8 @@ class PlotPosterior:
         rotation_matrix[1, 0] = np.sin(angle)
         rotation_matrix[1, 1] = np.cos(angle)
 
+        print(rotation_matrix)
+
         rotated_coords = np.zeros_like(coords)
         for i, coord in enumerate(coords):
             rotated_coords[i] = coord @ rotation_matrix
@@ -86,22 +94,22 @@ class PlotPosterior:
         kde_y = y
 
         if self.limit_at_axes:
-            kde_x, kde_y = self.extend_data_for_axis_limit(x, y, bin_width=self.bin_width)
+            kde_x, kde_y = self.extend_data_for_axis_limit(x, y, bin_widths=self.bin_widths)
 
             x_clip = (0, 99999)
             y_clip = (0, 99999)
             clip = (x_clip, y_clip)
 
         if self.limit_at_diagonal:
-            kde_x, kde_y = self.rotate_data(kde_x, kde_y, 45) # why is it 45 and not -45?
-            kde_x, kde_y = self.extend_data_for_axis_limit(kde_x, kde_y, bin_width=self.bin_width)
+            kde_x, kde_y = self.rotate_data(kde_x, kde_y, 45) # rotating clockwise, why is it 45 and not -45?
+            kde_x, kde_y = self.extend_data_for_axis_limit(kde_x, kde_y, bin_widths=self.bin_widths)
             kde_x, kde_y = self.rotate_data(kde_x, kde_y, -45)
 
         ax_histx.tick_params(axis="x", labelbottom=False)
         ax_histy.tick_params(axis="y", labelleft=False)
 
         sns.kdeplot(x=kde_x, y=kde_y, ax=ax, levels=[0.1, 0.5], clip=clip, **kwargs)
-        ax.scatter(kde_x, kde_y, alpha=0.07, color=scatter_color)
+        ax.scatter(x, y, alpha=0.07, color=scatter_color)
 
         sns.kdeplot(x=kde_x, ax=ax_histx, **kwargs)
         sns.kdeplot(y=kde_y, ax=ax_histy, **kwargs)
