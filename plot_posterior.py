@@ -17,8 +17,6 @@ class PlotPosterior:
 
         self.bin_widths = self.hist_bin_sizes()
 
-        print('bin width =', self.bin_widths)
-
     def scotts_rule(self, n, d):
         result = n ** (-1. / (d + 4))
         return result
