@@ -85,6 +85,19 @@ class PlotPosterior:
 
         return rotated_data1, rotated_data2
 
+
+    def extract_vertices(self, contour):
+        path = contour.collections[-1].get_paths()[0]
+        vertices = path.vertices
+
+        return vertices
+
+
+    def close_contour(self, path):
+        path.vertices[-1] = path.vertices[0]
+        path.closed = True
+
+
     def scatter_hist(self, x, y, ax, injected_x, injected_y, ax_histx, ax_histy, scatter_color='blue', **kwargs):
         clip = None
 
@@ -106,18 +119,47 @@ class PlotPosterior:
         ax_histx.tick_params(axis="x", labelbottom=False)
         ax_histy.tick_params(axis="y", labelleft=False)
 
-        sns.kdeplot(x=kde_x, y=kde_y, ax=ax, levels=[0.1, 0.5], clip=clip, **kwargs)
-        ax.scatter(x, y, alpha=0.07, color=scatter_color)
+        main_contour = sns.kdeplot(x=kde_x, y=kde_y, levels=[0.1, 0.5], clip=clip, **kwargs)
+        x_contour = sns.kdeplot(x=kde_x, **kwargs)
+        y_contour = sns.kdeplot(y=kde_y, **kwargs)
 
-        sns.kdeplot(x=kde_x, ax=ax_histx, **kwargs)
-        sns.kdeplot(y=kde_y, ax=ax_histy, **kwargs)
+        contours = [main_contour, x_contour, y_contour]
+        vertices_list = [self.extract_vertices(contour) for contour in contours]
+
+        for vertices in vertices_list:
+            vertex_x, vertex_y = zip(*vertices)
+            vertex_x = np.array(vertex_x)
+            vertex_y = np.array(vertex_y)
+            if self.limit_at_axes:
+                filter = np.intersect1d(np.where(vertex_x > 0), np.where(vertex_y > 0))
+            if self.limit_at_diagonal:
+                filter = np.where(vertex_y > vertex_x)
+            vertices = vertices[filter]
+
+        for contour in contours:
+            path = contour.collections[-1].get_paths()[0]
+            self.close_contour(path)
+
+        main_vertices = vertices_list[0]
+        xhist_vertices = vertices_list[1]
+        yhist_vertices = vertices_list[2]
+
+        main_x, main_y = zip(*main_vertices)
+        xhist_x, xhist_y = zip(*xhist_vertices)
+        yhist_x, yhist_y = zip(*yhist_vertices)
+
+        ax.scatter(x, y, alpha=0.07, color=scatter_color)
+        ax.plot(main_x, main_y)
+
+        ax_histx.plot(xhist_x, xhist_y)
+        ax_histy.plot(yhist_x, yhist_y)
 
         ax.axvline(injected_x, color='black')
         ax.axhline(injected_y, color='black')
         ax.scatter([injected_x], [injected_y], color='black', marker='o', label='injected value')
 
-        ax.axvline(0, color='red')
-        ax.axhline(0, color='red')
+        # ax.axvline(0, color='red')
+        # ax.axhline(0, color='red')
 
     def plot(self, save=False, show=False, xlabel='', ylabel='', title='', **kwargs):
         fig = plt.figure(figsize=(8, 8))
