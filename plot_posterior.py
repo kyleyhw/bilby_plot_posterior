@@ -85,17 +85,59 @@ class PlotPosterior:
 
         return rotated_data1, rotated_data2
 
-
-    def extract_vertices(self, contour):
+    def get_xy_from_contour(self, contour):
         path = contour.collections[-1].get_paths()[0]
-        vertices = path.vertices
 
-        return vertices
+        contour_x = path.vertices.T[0]
+        contour_y = path.vertices.T[1]
+
+        return contour_x, contour_y
+
+    def cut_contour_at_axes(self, contour):
+        path = contour.collections[-1].get_paths()[0]
+
+        contour_x = path.vertices.T[0]
+        contour_y = path.vertices.T[1]
+
+        filter = np.intersect1d(np.where(contour_x > 0), np.where(contour_y > 0))
+
+        path.vertices = path.vertices[filter]
+
+        contour_x = path.vertices.T[0]
+        contour_y = path.vertices.T[1]
+
+        extended_contour_x = np.zeros(shape=(len(contour_x) + 2,))
+        extended_contour_y = np.zeros(shape=(len(contour_y) + 2,))
+
+        extended_contour_x[1: -1] = contour_x
+        extended_contour_y[1: -1] = contour_y
+
+        return extended_contour_x, extended_contour_y
 
 
-    def close_contour(self, path):
-        path.vertices[-1] = path.vertices[0]
-        path.closed = True
+    def cut_contour_at_diagonal(self, contour):
+        path = contour.collections[-1].get_paths()[0]
+
+        contour_x = path.vertices.T[0]
+        contour_y = path.vertices.T[1]
+
+        filter = np.where(contour_y > contour_x)
+
+        path.vertices = path.vertices[filter]
+
+        contour_x = path.vertices.T[0]
+        contour_y = path.vertices.T[1]
+
+        extended_contour_x = np.zeros(shape=(len(contour_x) + 1,))
+        extended_contour_y = np.zeros(shape=(len(contour_y) + 1,))
+
+        extended_contour_x[0: -1] = contour_x
+        extended_contour_y[0: -1] = contour_y
+
+        extended_contour_x[-1] = contour_x[0]
+        extended_contour_y[-1] = contour_y[0]
+
+        return extended_contour_x, extended_contour_y
 
 
     def scatter_hist(self, x, y, ax, injected_x, injected_y, ax_histx, ax_histy, scatter_color='blue', **kwargs):
@@ -119,40 +161,25 @@ class PlotPosterior:
         ax_histx.tick_params(axis="x", labelbottom=False)
         ax_histy.tick_params(axis="y", labelleft=False)
 
-        main_contour = sns.kdeplot(x=kde_x, y=kde_y, levels=[0.1, 0.5], clip=clip, **kwargs)
-        x_contour = sns.kdeplot(x=kde_x, **kwargs)
-        y_contour = sns.kdeplot(y=kde_y, **kwargs)
+        main_ninety_contour = sns.kdeplot(x=kde_x, y=kde_y, levels=[0.1], clip=clip, **kwargs)
+        main_fifty_contour = sns.kdeplot(x=kde_x, y=kde_y, levels=[0.5], clip=clip, **kwargs)
 
-        contours = [main_contour, x_contour, y_contour]
-        vertices_list = [self.extract_vertices(contour) for contour in contours]
+        main_ninety_x, main_ninety_y = self.get_xy_from_contour(main_ninety_contour)
+        main_fifty_x, main_fifty_y = self.get_xy_from_contour(main_fifty_contour)
 
-        for vertices in vertices_list:
-            vertex_x, vertex_y = zip(*vertices)
-            vertex_x = np.array(vertex_x)
-            vertex_y = np.array(vertex_y)
-            if self.limit_at_axes:
-                filter = np.intersect1d(np.where(vertex_x > 0), np.where(vertex_y > 0))
-            if self.limit_at_diagonal:
-                filter = np.where(vertex_y > vertex_x)
-            vertices = vertices[filter]
-
-        for contour in contours:
-            path = contour.collections[-1].get_paths()[0]
-            self.close_contour(path)
-
-        main_vertices = vertices_list[0]
-        xhist_vertices = vertices_list[1]
-        yhist_vertices = vertices_list[2]
-
-        main_x, main_y = zip(*main_vertices)
-        xhist_x, xhist_y = zip(*xhist_vertices)
-        yhist_x, yhist_y = zip(*yhist_vertices)
+        if self.limit_at_axes:
+            main_ninety_x, main_ninety_y = self.cut_contour_at_axes(main_ninety_contour)
+            main_fifty_x, main_fifty_y = self.cut_contour_at_axes(main_fifty_contour)
+        if self.limit_at_diagonal:
+            main_ninety_x, main_ninety_y = self.cut_contour_at_diagonal(main_ninety_contour)
+            main_fifty_x, main_fifty_y = self.cut_contour_at_diagonal(main_fifty_contour)
 
         ax.scatter(x, y, alpha=0.07, color=scatter_color)
-        ax.plot(main_x, main_y)
+        ax.plot(main_ninety_x, main_ninety_y)
+        ax.plot(main_fifty_x, main_fifty_y)
 
-        ax_histx.plot(xhist_x, xhist_y)
-        ax_histy.plot(yhist_x, yhist_y)
+        sns.kdeplot(x=kde_x, ax=ax_histx, **kwargs)
+        sns.kdeplot(y=kde_y, ax=ax_histy, **kwargs)
 
         ax.axvline(injected_x, color='black')
         ax.axhline(injected_y, color='black')

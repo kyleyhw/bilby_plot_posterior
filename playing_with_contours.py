@@ -56,7 +56,7 @@ def cut_contour_at_diagonal(path):
 
 
 
-ax = sns.kdeplot(x=x, y=y, levels=[0.1])
+ax = sns.kdeplot(x=x, y=y, levels=[0.1, 0.5])
 path = ax.collections[-1].get_paths()[0]
 # print(path)
 contour_x, contour_y = cut_contour_at_diagonal(path)
