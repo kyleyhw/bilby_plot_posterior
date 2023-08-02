@@ -29,6 +29,9 @@ lambda_2 = data.injection_dict['lambda_2']
 dLt = delta_Lambda_tilde(eta, lambda_1, lambda_2)
 Lt = Lambda_tilde(q, lambda_1, lambda_2)
 
+print('injected lambda_1', lambda_1)
+print('injected lambda_2', lambda_2)
+
 print('delta_Lambda_tilde from injected L1L2 =', dLt)
 print('Lambda_tilde from injected L1L2 =', Lt)
 
@@ -40,5 +43,5 @@ estimated_lambda_2 = 1250
 estimated_dLt = delta_Lambda_tilde(eta, estimated_lambda_1, estimated_lambda_2)
 estimated_Lt = Lambda_tilde(q, estimated_lambda_1, estimated_lambda_2)
 
-print('delta_Lambda_tilde from recovered L1L2 =', estimated_dLt)
-print('Lambda_tilde from recovered L1L2 =', estimated_Lt)
+# print('delta_Lambda_tilde from recovered L1L2 =', estimated_dLt)
+# print('Lambda_tilde from recovered L1L2 =', estimated_Lt)
