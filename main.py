@@ -14,8 +14,9 @@ parameters = ['lambda_1', 'lambda_2']
 # filename = 'bns_binary_love_example_data0_1126259642-413_analysis_H1L1V1_result'
 # filename = 'bns_binary_love_free_spin_example_data0_1126259642-413_analysis_H1L1V1_result'
 # filename = 'bns_zero_spin_ROQ_data0_1126259642-413_analysis_H1L1V1_result'
-filename = 'bns_zero_spin_prior_ROQ_data0_1126259642-413_analysis_H1L1V1_result'
-
+# filename = 'bns_zero_spin_prior_ROQ_data0_1126259642-413_analysis_H1L1V1_result'
+# filename = 'bns_L1L2_ROQ_data0_1126259642-413_analysis_H1L1V1_result'
+filename = 'bns_LaLs_ROQ_data0_1126259642-413_analysis_H1L1V1_result'
 data = DataLoaderH5(filename='data/' + filename + '.hdf5', parameters=parameters)
 
 
