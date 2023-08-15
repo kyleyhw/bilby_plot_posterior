@@ -75,8 +75,6 @@ class PlotPosterior:
         rotation_matrix[1, 0] = np.sin(angle)
         rotation_matrix[1, 1] = np.cos(angle)
 
-        print(rotation_matrix)
-
         rotated_coords = np.zeros_like(coords)
         for i, coord in enumerate(coords):
             rotated_coords[i] = coord @ rotation_matrix
@@ -143,8 +141,8 @@ class PlotPosterior:
     def scatter_hist(self, x, y, ax, injected_x, injected_y, ax_histx, ax_histy, scatter_color='blue', **kwargs):
         clip = None
 
-        kde_x = x
-        kde_y = y
+        kde_x = x.copy()
+        kde_y = y.copy()
 
         if self.limit_at_axes:
             kde_x, kde_y = self.extend_data_for_axis_limit(x, y, bin_widths=self.bin_widths)
@@ -175,8 +173,8 @@ class PlotPosterior:
             main_fifty_x, main_fifty_y = self.cut_contour_at_diagonal(main_fifty_contour)
 
         ax.scatter(x, y, alpha=0.07, color=scatter_color)
-        ax.plot(main_ninety_x, main_ninety_y)
-        ax.plot(main_fifty_x, main_fifty_y)
+        ax.plot(main_ninety_x, main_ninety_y, **kwargs)
+        ax.plot(main_fifty_x, main_fifty_y, **kwargs)
 
         sns.kdeplot(x=kde_x, ax=ax_histx, **kwargs)
         sns.kdeplot(y=kde_y, ax=ax_histy, **kwargs)
